@@ -69,3 +69,132 @@ Update Documents
 
 2. delete the movie "Avatar"
 	db.movies.remove({_id:ObjectId("5c9f9936e5c2dfe9b3729c01")})	
+
+db.users.insertMany([
+  { "_id": 1, "name": "Alice", "age": 25, "city": "New York", "skills": ["JavaScript", "Node.js"] },
+  { "_id": 2, "name": "Bob", "age": 30, "city": "San Francisco", "skills": ["Python", "Django"] },
+  { "_id": 3, "name": "Charlie", "age": 22, "city": "Los Angeles", "skills": ["Java", "Spring"] },
+  { "_id": 4, "name": "David", "age": 35, "city": "Seattle", "skills": ["Ruby", "Rails"] },
+  { "_id": 5, "name": "Eve", "age": 28, "city": "Chicago", "skills": ["C#", ".NET"] }
+])
+
+Insert Documents:
+db.users.insertOne({ "_id": 6, "name": "Frank", "age": 26, "city": "Miami", "skills": ["React", "GraphQL"] });
+
+Query Documents:
+db.users.find({ age: { $gte: 30 } });
+
+Update Documents:
+db.users.updateOne({ name: "Bob" }, { $set: { city: "Portland" } });
+
+Delete Documents:
+db.users.deleteOne({ name: "Charlie" });
+
+
+Comparison Operators:
+db.users.find({ age: { $gte: 25, $lte: 30 } });
+
+
+Logical Operators:
+db.users.find({ $or: [{ city: "New York" }, { city: "Los Angeles" }] });
+
+Element Operators:
+db.users.find({ skills: { $exists: true } });
+
+Projection:
+db.users.find({ city: "San Francisco" }, { name: 1, age: 1, _id: 0 });
+
+Sorting:
+db.users.find().sort({ age: 1 });
+
+Indexing:
+Create an Index:
+db.users.createIndex({ name: 1 });
+
+
+AGGREGATION_LEARN
+
+db.sales.insertMany([
+  { "_id": 1, "product": "Laptop", "quantity": 2, "price": 1000, "date": ISODate("2022-01-01T08:00:00Z") },
+  { "_id": 2, "product": "Phone", "quantity": 1, "price": 500, "date": ISODate("2022-01-02T10:30:00Z") },
+  { "_id": 3, "product": "Tablet", "quantity": 3, "price": 300, "date": ISODate("2022-01-03T12:45:00Z") },
+  { "_id": 4, "product": "Laptop", "quantity": 1, "price": 1200, "date": ISODate("2022-01-04T14:15:00Z") },
+  { "_id": 5, "product": "Phone", "quantity": 2, "price": 600, "date": ISODate("2022-01-05T16:30:00Z") }
+])
+
+1. Filtering:
+find sales for the "Laptop" product:
+
+db.sales.aggregate([
+  { $match: { product: "Laptop" } }
+]);
+
+2. Grouping:
+Group the sales by product and calculate the total quantity and revenue for each product:
+
+db.sales.aggregate([
+  { $group: { _id: "$product", totalQuantity: { $sum: "$quantity" }, totalRevenue: { $sum: { $multiply: ["$quantity", "$price"] } } } }
+]);
+
+3. Sorting:
+Sort the results by total revenue in descending order:
+
+db.sales.aggregate([
+  { $group: { _id: "$product", totalQuantity: { $sum: "$quantity" }, totalRevenue: { $sum: { $multiply: ["$quantity", "$price"] } } } },
+  { $sort: { totalRevenue: -1 } }
+]);
+
+4. Projecting:
+Project only the product and total revenue fields:
+
+db.sales.aggregate([
+  { $group: { _id: "$product", totalQuantity: { $sum: "$quantity" }, totalRevenue: { $sum: { $multiply: ["$quantity", "$price"] } } } },
+  { $project: { _id: 0, product: "$_id", totalRevenue: 1 } }
+]);
+
+5. Filtering and Sorting:
+Find and sort the products with total revenue greater than $1000:
+
+db.sales.aggregate([
+  { $group: { _id: "$product", totalQuantity: { $sum: "$quantity" }, totalRevenue: { $sum: { $multiply: ["$quantity", "$price"] } } } },
+  { $match: { totalRevenue: { $gt: 1000 } } },
+  { $sort: { totalRevenue: -1 } }
+]);
+
+
+
+LOOKUP_LEARN
+
+db.orders.insertMany([
+  { "_id": 1, "orderNumber": "ORD001", "productID": 101, "quantity": 2 },
+  { "_id": 2, "orderNumber": "ORD002", "productID": 102, "quantity": 1 },
+  { "_id": 3, "orderNumber": "ORD003", "productID": 103, "quantity": 3 }
+])
+
+db.products.insertMany([
+  { "_id": 101, "productName": "Laptop", "price": 1000 },
+  { "_id": 102, "productName": "Phone", "price": 500 },
+  { "_id": 103, "productName": "Tablet", "price": 300 }
+])
+
+
+
+db.orders.aggregate([
+  {
+    $lookup: {
+      from: "products",  
+      localField: "productID", 
+      foreignField: "_id", 
+      as: "productInfo" 
+    }
+  },
+  {
+    $project: {
+      orderNumber: 1,
+      quantity: 1,
+      product: { $arrayElemAt: ["$productInfo", 0] } 
+    }
+  }
+]);
+
+
